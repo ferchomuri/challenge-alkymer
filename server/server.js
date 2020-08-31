@@ -1,18 +1,19 @@
 require("dotenv").config();
 const express = require("express");
+const cors = require("cors");
 const db = require("./db");
 
 const morgan = require("morgan");
 
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 
 //Get all APPS
-app.get("/api/getApps", async (req, res) => {
+app.get("/api/App/getApps", async (req, res) => {
   try {
     const results = await db.query("select * from app");
-    console.log(results);
     res.status(200).json({
       status: "success",
       results: results.rows.length,
@@ -49,45 +50,61 @@ app.post("/api/App", async (req, res) => {
 
   try {
     const results = await db.query(
-      "INSERT INTO app (id_app, name_app, img, price, id_category) values ($1, $2, $3, $4, $5)",
+      "INSERT INTO app (name_app, image, id_category,  price_app) values ($1, $2, $3, $4) returning *",
+      [req.body.name, req.body.image, req.body.category, req.body.price]
+    );
+    console.log(results);
+    res.status(201).json({
+      status: "success",
+      data: {
+        app: results.rows[0],
+      },
+    });
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+//Update App
+app.put("/api/App/:id", async (req, res) => {
+  try {
+    const results = await db.query(
+      "UPDATE app SET name_app = $1, image = $2, id_category = $3, price_app = $4 where id_app = $5 returning *",
       [
-        req.body.id,
         req.body.name,
-        req.body.img,
-        req.body.price,
+        req.body.image,
         req.body.category,
+        req.body.price,
+        req.params.id,
       ]
     );
     console.log(results);
+    res.status(200).json({
+      status: "success",
+      data: {
+        app: results.rows[0],
+      },
+    });
   } catch (error) {
     console.log(error);
   }
 
-  res.status(201).json({
-    status: "success",
-    data: {
-      app: ["mcdonalds"],
-    },
-  });
-});
-
-//Update App
-app.put("/api/App/:id", (req, res) => {
   console.log(req.params.id);
   console.log(req.body);
-  res.status(200).json({
-    status: "success",
-    data: {
-      app: ["mcdonalds"],
-    },
-  });
 });
 
 //Delete App
-app.delete("/api/App/:id", (req, res) => {
-  res.status(204).json({
-    status: "success",
-  });
+app.delete("/api/App/:id", async (req, res) => {
+  try {
+    const results = await db.query("DELETE FROM app where id_app = $1", [
+      req.params.id,
+    ]);
+    res.status(204).json({
+      status: "success",
+    });
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 const port = process.env.PORT || 3001;
