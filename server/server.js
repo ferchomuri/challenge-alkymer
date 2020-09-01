@@ -11,7 +11,7 @@ app.use(cors());
 app.use(express.json());
 
 //Get all APPS
-app.get("/api/App/getApps", async (req, res) => {
+app.get("/api/App", async (req, res) => {
   try {
     const results = await db.query("select * from app");
     res.status(200).json({
